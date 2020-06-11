@@ -72,7 +72,7 @@ public class ChatServiceController {
     ChatServiceRequest.Sender.Builder senderBuilder =
     ChatServiceRequest.Sender.newBuilder();
     senderBuilder.setDisplayName(event.at("/user/displayName").asText())
-        .setChatClientGeneratedId(event.at("/space/type").asText().substring(7))
+        .setChatClientGeneratedId(event.at("/space/name").asText().substring(7))
         .setUserId(event.at("/user/displayName").asText().substring(6));
     chatServiceRequestBuilder.setSender(senderBuilder); 
     return chatServiceRequestBuilder.build();

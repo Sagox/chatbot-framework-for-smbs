@@ -35,6 +35,6 @@ public class HangoutsMessageSender {
 
   public void sendMessage(String spaceID, String msg) throws IOException {
     Message message = new Message().setText(msg);
-    chatService.spaces().messages().create(spaceID, message).execute();
+    chatService.spaces().messages().create("spaces/" + spaceID, message).execute();
   }
 }
