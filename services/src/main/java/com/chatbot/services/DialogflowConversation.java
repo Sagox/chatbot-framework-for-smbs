@@ -1,5 +1,7 @@
 package com.chatbot.services;
 
+import com.google.cloud.dialogflow.v2.Context;
+import com.google.cloud.dialogflow.v2.ContextsClient;
 import com.google.cloud.dialogflow.v2.DetectIntentRequest;
 import com.google.cloud.dialogflow.v2.DetectIntentResponse;
 import com.google.cloud.dialogflow.v2.QueryInput;
@@ -12,6 +14,8 @@ import com.google.protobuf.Struct;
 import com.google.cloud.dialogflow.v2.EventInput;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public class DialogflowConversation {
@@ -86,8 +90,21 @@ public class DialogflowConversation {
     }
   }
 
+  public List<String> getCurrentContexts() throws Exception {
+    List<String> contextList = new ArrayList<String>();
+    try (ContextsClient contextsClient = ContextsClient.create()) {
+      // Performs the list contexts request
+      SessionName session = SessionName.of(this.projectID, this.sessionID);
+      for (Context context : contextsClient.listContexts(session).iterateAll()) {
+        contextList.add(context.getName());
+      }
+    }
+    return contextList;
+  }
+
   public void printAttrs() {
-    System.out.print(("[projectID = " + projectID + " sessionID = " + sessionID + " langCode = " + langCode + "]"));
+    System.out.print(("[projectID = " + projectID + " sessionID = " + sessionID + " langCode = " +
+        langCode + "]"));
   }
 
 }

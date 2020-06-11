@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package com.chatbot.services.protobuf;
+
+message ChatServiceRequest {
+
+  enum ChatClient {
+    UNKNOWN_CHAT_CLIENT = 0;
+    WHATSAPP = 1;
+    HANGOUTS = 2;
+  }
+  enum RequestType {
+    UNKNOWN_REQUEST_TYPE = 0;
+    ADDED = 1;
+    REMOVED = 2;
+    MESSAGE = 3;
+  }
+  enum MimeType {
+    UNKNOWN_MIME_TYPE = 0;
+    JPG = 1;
+    PNG = 2;
+  }
+  message Sender {
+    string chat_client_generated_id = 1;
+    string user_id = 2;
+    string display_name = 3;
+  }
+  message Attachment {
+    string link = 1;
+    MimeType mime_type = 2;
+    string caption = 3;
+  }
+  message UserMessage {
+    string text = 1;
+    repeated Attachment attachments = 2;
+  }
+  ChatClient chat_client = 1;
+  RequestType request_type = 2;
+  Sender sender = 3;
+  UserMessage user_message = 4;
+} 
