@@ -65,14 +65,13 @@ public class DialogflowConversation {
     }
   }
   // function to trigger a dialogflow event and get the reponse
-  public String triggerEvent(String event, Struct payload) throws IOException {
+  public String triggerEvent(String event, Struct parameters, Struct payload) throws IOException {
     try (SessionsClient sessionsClient = SessionsClient.create()) {
       SessionName session = SessionName.of(this.projectID, this.sessionID);
       System.out.println("Session Path: " + session.toString());
       // the event to be triggered at dialogflow
-      EventInput.Builder eventInput = EventInput.newBuilder()
-          .setName(event)
-          .setLanguageCode(this.langCode);
+      EventInput.Builder eventInput = EventInput.newBuilder().setName(event)
+          .setParameters(parameters).setLanguageCode(this.langCode);
       // set the query to the event to be triggered
       QueryInput queryInput = QueryInput.newBuilder().setEvent(eventInput).build();
       // build the query params
@@ -86,7 +85,7 @@ public class DialogflowConversation {
           .build();
       DetectIntentResponse response = sessionsClient.detectIntent(detectIntentRequest);
       QueryResult queryResult = response.getQueryResult();
-      return queryResult.getQueryText();
+      return queryResult.getFulfillmentText();
     }
   }
 
