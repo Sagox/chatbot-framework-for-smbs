@@ -28,7 +28,6 @@ message ChatServiceRequest {
   message Attachment {
     string link = 1;
     MimeType mime_type = 2;
-    string caption = 3;
   }
   message UserMessage {
     string text = 1;

@@ -13,6 +13,7 @@ import com.google.auth.oauth2.GoogleCredentials;
 
 import org.springframework.stereotype.Component;
 
+// This class initialises the HangoutsChat and can thereafter be used
 @Component
 public class HangoutsMessageSender {
   
@@ -30,7 +31,7 @@ public class HangoutsMessageSender {
     chatService = new HangoutsChat.Builder(
         GoogleNetHttpTransport.newTrustedTransport(),
         JacksonFactory.getDefaultInstance(), requestInitializer)
-        .setApplicationName("basic-async-bot-java").build();
+        .setApplicationName("chatbot").build();
   }
 
   public void sendMessage(String spaceID, String msg) throws IOException {

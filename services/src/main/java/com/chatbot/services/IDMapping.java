@@ -16,22 +16,18 @@ import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
+import com.chatbot.services.protobuf.ChatServiceRequestOuterClass.ChatServiceRequest.ChatClient;
 
 import org.springframework.stereotype.Component;
 
 @Component
 public class IDMapping {
-  enum ChatClient {
-    UNKNOWN,
-    WHATSAPP,
-    HANGOUTS
-  };
   
-  Map<ChatClient, BiMap<String, String>> ChatClientToChatClientBiMapMapping;
+  public Map<ChatClient, BiMap<String, String>> ChatClientToChatClientBiMapMapping;
   public IDMapping() throws GeneralSecurityException, IOException {
-    ChatClientToChatClientBiMapMapping = new HashMap<>();
-    ChatClientToChatClientBiMapMapping.put(ChatClient.WHATSAPP, HashBiMap.create());
-    ChatClientToChatClientBiMapMapping.put(ChatClient.HANGOUTS, HashBiMap.create());
+    ChatClientToChatClientBiMapMapping = new HashMap<ChatClient, BiMap<String, String>>();
+    ChatClientToChatClientBiMapMapping.put(ChatClient.WHATSAPP, HashBiMap.create(100));
+    ChatClientToChatClientBiMapMapping.put(ChatClient.HANGOUTS, HashBiMap.create(100));
     populateHangoutsBiMap();
   }
 
@@ -60,9 +56,25 @@ public class IDMapping {
   // this function populates the whatsappID to userID mapping
   void populateWhatsappBiMap() {}
 
+  public void addNewMapping(String chatClientGeneratedID, String userID, ChatClient chatClient) {
+    ChatClientToChatClientBiMapMapping.get(chatClient).put(chatClientGeneratedID, userID);
+  }
+
   // function to get the chat client specific ID for a user given the userID and the chat client
   public String getChatClientGeneratedID(String userID, ChatClient chatClient) {
     return ChatClientToChatClientBiMapMapping.get(chatClient).inverse().get(userID);
+  }
+
+  // function to get the chat client specific ID for a user given the userID
+  public String getChatClientGeneratedID(String userID) {
+    for(ChatClient chatClient: ChatClient.values()) {
+      if(ChatClientToChatClientBiMapMapping.containsKey(chatClient)) {
+        if(ChatClientToChatClientBiMapMapping.get(chatClient).inverse().containsKey(userID)) {
+          return ChatClientToChatClientBiMapMapping.get(chatClient).inverse().get(userID);
+        }
+      }
+    }
+    return "";
   }
 
   // function to get the user ID associated with a given chat client generated ID

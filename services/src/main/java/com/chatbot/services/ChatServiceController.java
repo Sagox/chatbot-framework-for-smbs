@@ -1,10 +1,7 @@
 package com.chatbot.services;
 
-import java.io.IOException;
-import java.security.GeneralSecurityException;
+import java.util.Iterator;
 import java.util.Map;
-
-import javax.websocket.RemoteEndpoint.Async;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import java.lang.IllegalCallerException;
@@ -17,7 +14,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.chatbot.services.protobuf.ChatServiceRequestOuterClass.ChatServiceRequest;
 import com.chatbot.services.protobuf.ChatServiceRequestOuterClass.ChatServiceRequest.ChatClient;
 import com.chatbot.services.protobuf.ChatServiceRequestOuterClass.ChatServiceRequest.RequestType;
-import com.chatbot.services.AsyncService;
 
 @RestController
 public class ChatServiceController {
@@ -26,22 +22,25 @@ public class ChatServiceController {
   private AsyncService asyncService;
 
   @PostMapping("/")
-  public String onEvent(@RequestHeader Map<String, String> headers, @RequestBody JsonNode event)
-       throws IOException, GeneralSecurityException, InterruptedException {
-      ChatServiceRequest chatServiceRequest;
-      String userAgent = headers.get("user-agent");
-      if(userAgent.equals("Google-Dynamite")) {
-        chatServiceRequest = parseHangoutsRequest(event);
-      } else {
-        chatServiceRequest = parseWhatsappRequest(event);
-      }
-      if(chatServiceRequest.getChatClient() == ChatServiceRequest.ChatClient.HANGOUTS) {
+  public String onRequest(@RequestHeader Map<String, String> headers, @RequestBody JsonNode event) {
+    ChatServiceRequest chatServiceRequest;
+    String userAgent = headers.get("user-agent");
+    if (userAgent.equals("Google-Dynamite")) {
+      try {
+        chatServiceRequest = parseHangoutsRequest(event); 
         asyncService.hangoutsAsyncHandler(chatServiceRequest);
+      } catch (Exception e) {
+        e.printStackTrace();
+        // If there was an error in parsing the request, either we do not support the type of
+        // request or the format of the request is incorrect, in both these cases returning an empty
+        // string is an option.
         return "";
-      } else {
+      }
+    } else {
+        chatServiceRequest = parseWhatsappRequest(event);
         // whatsapp async handler
         // return acknowledgement
-      }
+    }
       return "";
   }
 
@@ -57,11 +56,7 @@ public class ChatServiceController {
         }
         break;
       case "MESSAGE":
-        chatServiceRequestBuilder.setRequestType(RequestType.MESSAGE);
-        ChatServiceRequest.UserMessage.Builder userMessageBuilder =
-            ChatServiceRequest.UserMessage.newBuilder()
-            .setText(event.at("/message/text").asText());
-        chatServiceRequestBuilder.setUserMessage(userMessageBuilder); 
+        chatServiceRequestBuilder = parseHangoutsUserMessage(chatServiceRequestBuilder, event);
         break;
       case "REMOVED_FROM_SPACE":
         chatServiceRequestBuilder.setRequestType(RequestType.REMOVED);
@@ -69,13 +64,42 @@ public class ChatServiceController {
       default:
         throw new IllegalArgumentException("The request has no event type");
     }
-    ChatServiceRequest.Sender.Builder senderBuilder =
-    ChatServiceRequest.Sender.newBuilder();
+    chatServiceRequestBuilder = parseHangoutsSender(chatServiceRequestBuilder, event);
+    return chatServiceRequestBuilder.build();
+  }
+
+  public ChatServiceRequest.Builder parseHangoutsUserMessage(
+      ChatServiceRequest.Builder chatServiceRequestBuilder, JsonNode event) {
+    chatServiceRequestBuilder = chatServiceRequestBuilder.setRequestType(RequestType.MESSAGE);
+    ChatServiceRequest.UserMessage.Builder userMessageBuilder = ChatServiceRequest.UserMessage.newBuilder();
+    if(event.at("/message").has("attachment")) {
+      if(event.at("/message").has("argumentText")) {
+        userMessageBuilder = userMessageBuilder.setText(event.at("/message/argumentText").asText());
+      }
+      Iterator<JsonNode> attachmentIterator = event.at("/message/attachment").elements();
+      while(attachmentIterator.hasNext()) {
+        JsonNode attachment = (JsonNode)attachmentIterator.next();
+        ChatServiceRequest.Attachment.Builder attachmentBuilder = ChatServiceRequest.Attachment.newBuilder();
+        attachmentBuilder.setLink(attachment.at("/downloadUri").asText());
+        attachmentBuilder.setMimeType(ChatServiceRequest.MimeType.UNKNOWN_MIME_TYPE);
+        userMessageBuilder = userMessageBuilder.addAttachments(attachmentBuilder);
+      }
+    } else {
+      userMessageBuilder = userMessageBuilder.setText(event.at("/message/text").asText());
+    }
+    chatServiceRequestBuilder = chatServiceRequestBuilder.setUserMessage(userMessageBuilder); 
+    return chatServiceRequestBuilder;
+  }
+
+  public ChatServiceRequest.Builder parseHangoutsSender(ChatServiceRequest.Builder chatServiceRequestBuilder,
+      JsonNode event) {
+    ChatServiceRequest.Sender.Builder senderBuilder = ChatServiceRequest.Sender.newBuilder();
     senderBuilder.setDisplayName(event.at("/user/displayName").asText())
         .setChatClientGeneratedId(event.at("/space/name").asText().substring(7))
-        .setUserId(event.at("/user/displayName").asText().substring(6));
-    chatServiceRequestBuilder.setSender(senderBuilder); 
-    return chatServiceRequestBuilder.build();
+        .setUserId(event.at("/user/name").asText().substring(6));
+    chatServiceRequestBuilder = chatServiceRequestBuilder.setSender(senderBuilder); 
+    return chatServiceRequestBuilder;
+
   }
 
   public ChatServiceRequest parseWhatsappRequest(JsonNode event) {
