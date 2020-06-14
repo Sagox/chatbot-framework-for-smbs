@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.chatbot.services.protobuf.ChatServiceRequestOuterClass.ChatServiceRequest;
 import com.chatbot.services.protobuf.ChatServiceRequestOuterClass.ChatServiceRequest.ChatClient;
+import com.chatbot.services.protobuf.ChatServiceRequestOuterClass.ChatServiceRequest.MimeType;
 import com.chatbot.services.protobuf.ChatServiceRequestOuterClass.ChatServiceRequest.RequestType;
 
 @RestController
@@ -30,11 +31,10 @@ public class ChatServiceController {
         chatServiceRequest = parseHangoutsRequest(event); 
         asyncService.hangoutsAsyncHandler(chatServiceRequest);
       } catch (Exception e) {
-        e.printStackTrace();
         // If there was an error in parsing the request, either we do not support the type of
         // request or the format of the request is incorrect, in both these cases returning an empty
         // string is an option.
-        return "";
+        e.printStackTrace();
       }
     } else {
         chatServiceRequest = parseWhatsappRequest(event);
@@ -44,9 +44,9 @@ public class ChatServiceController {
       return "";
   }
 
-  public ChatServiceRequest parseHangoutsRequest(JsonNode event) {
-    ChatServiceRequest.Builder chatServiceRequestBuilder = ChatServiceRequest.newBuilder();
-    chatServiceRequestBuilder.setChatClient(ChatClient.HANGOUTS);
+  public ChatServiceRequest parseHangoutsRequest(JsonNode event) throws Exception {
+    ChatServiceRequest.Builder chatServiceRequestBuilder = ChatServiceRequest.newBuilder()
+        .setChatClient(ChatClient.HANGOUTS);
     switch (event.at("/type").asText()) {
       case "ADDED_TO_SPACE":
         chatServiceRequestBuilder.setRequestType(RequestType.ADDED);
@@ -70,22 +70,31 @@ public class ChatServiceController {
 
   public ChatServiceRequest.Builder parseHangoutsUserMessage(
       ChatServiceRequest.Builder chatServiceRequestBuilder, JsonNode event) {
-    chatServiceRequestBuilder = chatServiceRequestBuilder.setRequestType(RequestType.MESSAGE);
+    chatServiceRequestBuilder.setRequestType(RequestType.MESSAGE);
     ChatServiceRequest.UserMessage.Builder userMessageBuilder = ChatServiceRequest.UserMessage.newBuilder();
     if(event.at("/message").has("attachment")) {
       if(event.at("/message").has("argumentText")) {
-        userMessageBuilder = userMessageBuilder.setText(event.at("/message/argumentText").asText());
+        userMessageBuilder.setText(event.at("/message/argumentText").asText());
       }
       Iterator<JsonNode> attachmentIterator = event.at("/message/attachment").elements();
       while(attachmentIterator.hasNext()) {
         JsonNode attachment = (JsonNode)attachmentIterator.next();
         ChatServiceRequest.Attachment.Builder attachmentBuilder = ChatServiceRequest.Attachment.newBuilder();
         attachmentBuilder.setLink(attachment.at("/downloadUri").asText());
-        attachmentBuilder.setMimeType(ChatServiceRequest.MimeType.UNKNOWN_MIME_TYPE);
+        switch (attachment.at("/contentType").asText()) {
+          case "image/png":
+            attachmentBuilder.setMimeType(MimeType.PNG);
+            break;
+          case "image/jpeg":
+            attachmentBuilder.setMimeType(MimeType.JPEG);
+            break;
+          default:
+            attachmentBuilder.setMimeType(MimeType.UNKNOWN_MIME_TYPE);
+        }
         userMessageBuilder = userMessageBuilder.addAttachments(attachmentBuilder);
       }
     } else {
-      userMessageBuilder = userMessageBuilder.setText(event.at("/message/text").asText());
+      userMessageBuilder.setText(event.at("/message/text").asText());
     }
     chatServiceRequestBuilder = chatServiceRequestBuilder.setUserMessage(userMessageBuilder); 
     return chatServiceRequestBuilder;
@@ -97,7 +106,7 @@ public class ChatServiceController {
     senderBuilder.setDisplayName(event.at("/user/displayName").asText())
         .setChatClientGeneratedId(event.at("/space/name").asText().substring(7))
         .setUserId(event.at("/user/name").asText().substring(6));
-    chatServiceRequestBuilder = chatServiceRequestBuilder.setSender(senderBuilder); 
+    chatServiceRequestBuilder.setSender(senderBuilder); 
     return chatServiceRequestBuilder;
 
   }

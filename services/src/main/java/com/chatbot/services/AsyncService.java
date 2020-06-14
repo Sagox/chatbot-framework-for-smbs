@@ -50,6 +50,7 @@ public class AsyncService {
         } else {
             List<String> currentContextList = dialogflowConversation.getCurrentContexts(); 
             System.out.println(currentContextList.toString());
+            System.out.println(chatServiceRequest.getUserMessage().getAttachments(0).getMimeType().toString());
             if(currentContextList.contains("ExpectingImagesContext")) {
               // send images to backend
               hangoutsMessageSender.sendMessage(chatServiceRequest.getSender().getChatClientGeneratedId(),
