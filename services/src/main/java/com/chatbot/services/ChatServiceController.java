@@ -71,7 +71,8 @@ public class ChatServiceController {
   private ChatServiceRequest.Builder parseHangoutsUserMessage(
       ChatServiceRequest.Builder chatServiceRequestBuilder, JsonNode event) {
     chatServiceRequestBuilder.setRequestType(RequestType.MESSAGE);
-    ChatServiceRequest.UserMessage.Builder userMessageBuilder = ChatServiceRequest.UserMessage.newBuilder();
+    ChatServiceRequest.UserMessage.Builder userMessageBuilder =
+        ChatServiceRequest.UserMessage.newBuilder();
     if(event.at("/message").has("attachment")) {
       if(event.at("/message").has("argumentText")) {
         userMessageBuilder.setText(event.at("/message/argumentText").asText());
@@ -79,7 +80,8 @@ public class ChatServiceController {
       Iterator<JsonNode> attachmentIterator = event.at("/message/attachment").elements();
       while(attachmentIterator.hasNext()) {
         JsonNode attachment = (JsonNode)attachmentIterator.next();
-        ChatServiceRequest.Attachment.Builder attachmentBuilder = ChatServiceRequest.Attachment.newBuilder();
+        ChatServiceRequest.Attachment.Builder attachmentBuilder =
+            ChatServiceRequest.Attachment.newBuilder();
         attachmentBuilder.setLink(attachment.at("/downloadUri").asText());
         switch (attachment.at("/contentType").asText()) {
           case "image/png":
@@ -91,17 +93,17 @@ public class ChatServiceController {
           default:
             attachmentBuilder.setMimeType(MimeType.UNKNOWN_MIME_TYPE);
         }
-        userMessageBuilder = userMessageBuilder.addAttachments(attachmentBuilder);
+        userMessageBuilder.addAttachments(attachmentBuilder);
       }
     } else {
       userMessageBuilder.setText(event.at("/message/text").asText());
     }
-    chatServiceRequestBuilder = chatServiceRequestBuilder.setUserMessage(userMessageBuilder); 
+    chatServiceRequestBuilder.setUserMessage(userMessageBuilder); 
     return chatServiceRequestBuilder;
   }
 
-  private ChatServiceRequest.Builder parseHangoutsSender(ChatServiceRequest.Builder chatServiceRequestBuilder,
-      JsonNode event) {
+  private ChatServiceRequest.Builder parseHangoutsSender(
+      ChatServiceRequest.Builder chatServiceRequestBuilder, JsonNode event) {
     ChatServiceRequest.Sender.Builder senderBuilder = ChatServiceRequest.Sender.newBuilder();
     senderBuilder.setDisplayName(event.at("/user/displayName").asText())
         .setChatClientGeneratedId(event.at("/space/name").asText().substring(7))

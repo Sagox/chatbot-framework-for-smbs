@@ -13,7 +13,6 @@
 	<version>0.0.1-SNAPSHOT</version>
 	<name>demo</name>
 	<description>Chatbot</description>
-
 	<properties>
 		<java.version>1.8</java.version>
 	</properties>
@@ -65,8 +64,8 @@
 			</exclusions>
 		</dependency>
 	</dependencies>
-
 	<build>
+
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>

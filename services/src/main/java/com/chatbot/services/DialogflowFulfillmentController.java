@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import com.chatbot.services.protobuf.ChatServiceRequestOuterClass.ChatServiceRequest.ChatClient;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -32,11 +33,10 @@ public class DialogflowFulfillmentController {
             String paramName = (String) paramKeyIterator.next();
             parameterMap.put(paramName, parameters.get(paramName).asText());
         }
-        System.out.println(parameterMap.toString());
         if(intentName.equals("ChangeCategory")) {
             // change the category to paramMap.get("suggestedCategory") for userID
             asyncService.fulfillmentAsyncHandler(userID, "Your category has been changed to "
-                + parameterMap.get("suggestedCategory"));
+                + parameterMap.get("suggestedCategory"), ChatClient.HANGOUTS);
         }
         // an empty string is returned so that the responses added to the dialogflow console are
         // used

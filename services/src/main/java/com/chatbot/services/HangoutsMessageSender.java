@@ -11,20 +11,24 @@ import com.google.api.services.chat.v1.model.Message;
 import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.GoogleCredentials;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 // This class initialises the HangoutsChat and can thereafter be used
 @Component
 public class HangoutsMessageSender {
   
-  static final String CHAT_SCOPE = "https://www.googleapis.com/auth/chat.bot";
+  private String CHAT_SCOPE;
   private GoogleCredentials credentials;
   private HttpRequestInitializer requestInitializer;
   private HangoutsChat chatService;
 
-  public HangoutsMessageSender() throws GeneralSecurityException, IOException {
+  public HangoutsMessageSender(@Value("${hangoutsAPIScope}") String apiScope,
+      @Value("${credentialsFile}") String credentialsFile) throws GeneralSecurityException,
+      IOException {
+    this.CHAT_SCOPE = apiScope;
     credentials = GoogleCredentials.fromStream(
-        HangoutsMessageSender.class.getResourceAsStream("/service-acct.json"))
+        HangoutsMessageSender.class.getResourceAsStream(credentialsFile))
         .createScoped(CHAT_SCOPE);
     requestInitializer = new HttpCredentialsAdapter(credentials);
     chatService = new HangoutsChat.Builder(

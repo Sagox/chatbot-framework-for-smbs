@@ -18,15 +18,19 @@ import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.chatbot.services.protobuf.ChatServiceRequestOuterClass.ChatServiceRequest.ChatClient;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
 public class IDMapping {
-  
-  final static String CHAT_SCOPE = "https://www.googleapis.com/auth/chat.bot";
+
+
+  private String CHAT_SCOPE;
   private Map<ChatClient, BiMap<String, String>> ChatClientToChatClientBiMapMapping;
 
-  public IDMapping() throws GeneralSecurityException, IOException {
+  public IDMapping(@Value("${hangoutsAPIScope}") String apiScope) throws GeneralSecurityException,
+      IOException {
+    this.CHAT_SCOPE = apiScope;
     ChatClientToChatClientBiMapMapping = new HashMap<ChatClient, BiMap<String, String>>();
     ChatClientToChatClientBiMapMapping.put(ChatClient.WHATSAPP, HashBiMap.create(100));
     ChatClientToChatClientBiMapMapping.put(ChatClient.HANGOUTS, HashBiMap.create(100));

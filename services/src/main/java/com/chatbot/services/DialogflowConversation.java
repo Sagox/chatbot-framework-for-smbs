@@ -68,7 +68,6 @@ public class DialogflowConversation {
   public String triggerEvent(String event, Struct parameters, Struct payload) throws IOException {
     try (SessionsClient sessionsClient = SessionsClient.create()) {
       SessionName session = SessionName.of(this.projectID, this.sessionID);
-      System.out.println("Session Path: " + session.toString());
       // the event to be triggered at dialogflow
       EventInput.Builder eventInput = EventInput.newBuilder().setName(event)
           .setParameters(parameters).setLanguageCode(this.langCode);
@@ -100,10 +99,4 @@ public class DialogflowConversation {
     }
     return contextList;
   }
-
-  public void printAttrs() {
-    System.out.print(("[projectID = " + projectID + " sessionID = " + sessionID + " langCode = " +
-        langCode + "]"));
-  }
-
 }
