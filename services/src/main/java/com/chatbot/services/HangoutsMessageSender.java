@@ -17,13 +17,12 @@ import org.springframework.stereotype.Component;
 @Component
 public class HangoutsMessageSender {
   
-  String CHAT_SCOPE;
-  GoogleCredentials credentials;
-  HttpRequestInitializer requestInitializer;
-  HangoutsChat chatService;
+  static final String CHAT_SCOPE = "https://www.googleapis.com/auth/chat.bot";
+  private GoogleCredentials credentials;
+  private HttpRequestInitializer requestInitializer;
+  private HangoutsChat chatService;
 
   public HangoutsMessageSender() throws GeneralSecurityException, IOException {
-    CHAT_SCOPE = "https://www.googleapis.com/auth/chat.bot";
     credentials = GoogleCredentials.fromStream(
         HangoutsMessageSender.class.getResourceAsStream("/service-acct.json"))
         .createScoped(CHAT_SCOPE);

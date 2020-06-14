@@ -23,7 +23,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class IDMapping {
   
-  public Map<ChatClient, BiMap<String, String>> ChatClientToChatClientBiMapMapping;
+  final static String CHAT_SCOPE = "https://www.googleapis.com/auth/chat.bot";
+  private Map<ChatClient, BiMap<String, String>> ChatClientToChatClientBiMapMapping;
+
   public IDMapping() throws GeneralSecurityException, IOException {
     ChatClientToChatClientBiMapMapping = new HashMap<ChatClient, BiMap<String, String>>();
     ChatClientToChatClientBiMapMapping.put(ChatClient.WHATSAPP, HashBiMap.create(100));
@@ -31,9 +33,7 @@ public class IDMapping {
     populateHangoutsBiMap();
   }
 
-  // this function populates the hangouts spaceID to userID mapping
-  void populateHangoutsBiMap() throws GeneralSecurityException, IOException {
-    final String CHAT_SCOPE = "https://www.googleapis.com/auth/chat.bot";
+  private void populateHangoutsBiMap() throws GeneralSecurityException, IOException {
     GoogleCredentials credentials = GoogleCredentials
         .fromStream(IDMapping.class.getResourceAsStream("/service-acct.json"))
         .createScoped(CHAT_SCOPE);
@@ -41,31 +41,31 @@ public class IDMapping {
     HangoutsChat chatService;
     chatService = new HangoutsChat.Builder(GoogleNetHttpTransport.newTrustedTransport(),
         JacksonFactory.getDefaultInstance(), requestInitializer)
-            .setApplicationName("basic-async-bot-java").build();
+            .setApplicationName("chatbot").build();
     List<Space> spacesList = chatService.spaces().list().execute().getSpaces();
     for(Space space: spacesList) {
       String spaceName = space.getName();
-      List<Membership> memebershipList =chatService.spaces().members().list(spaceName).execute()
-            .getMemberships();
+      List<Membership> memebershipList = chatService.spaces().members().list(spaceName).execute()
+          .getMemberships();
       for(Membership membership: memebershipList) {
         ChatClientToChatClientBiMapMapping.get(ChatClient.HANGOUTS)
             .put(spaceName.substring(7), membership.getMember().getName().substring(6));
       }
     }
   }
-  // this function populates the whatsappID to userID mapping
-  void populateWhatsappBiMap() {}
+
+  private void populateWhatsappBiMap() {}
 
   public void addNewMapping(String chatClientGeneratedID, String userID, ChatClient chatClient) {
     ChatClientToChatClientBiMapMapping.get(chatClient).put(chatClientGeneratedID, userID);
   }
 
-  // function to get the chat client specific ID for a user given the userID and the chat client
+  // get the chat client specific ID for a user given the userID and the chat client
   public String getChatClientGeneratedID(String userID, ChatClient chatClient) {
     return ChatClientToChatClientBiMapMapping.get(chatClient).inverse().get(userID);
   }
 
-  // function to get the chat client specific ID for a user given the userID
+  // get the chat client specific ID for a user given the userID
   public String getChatClientGeneratedID(String userID) {
     for(ChatClient chatClient: ChatClient.values()) {
       if(ChatClientToChatClientBiMapMapping.containsKey(chatClient)) {
@@ -77,7 +77,7 @@ public class IDMapping {
     return "";
   }
 
-  // function to get the user ID associated with a given chat client generated ID
+  // get the user ID associated with a given chat client generated ID
   public String getUserID(String chatClientGeneratedID) {
     for(ChatClient chatClient: ChatClient.values()) {
       if(ChatClientToChatClientBiMapMapping.containsKey(chatClient)) {
@@ -89,8 +89,7 @@ public class IDMapping {
     return "";
   }
 
-  // function to get the user ID associated with a given chat client generated ID and the chat
-  // client
+  // get the user ID associated with a given chat client generated ID and the chat client
   public String getUserID(String chatClientGeneratedID, ChatClient chatClient) {
     if(ChatClientToChatClientBiMapMapping.get(chatClient).containsKey(chatClientGeneratedID)) {
       return ChatClientToChatClientBiMapMapping.get(chatClient).get(chatClientGeneratedID);

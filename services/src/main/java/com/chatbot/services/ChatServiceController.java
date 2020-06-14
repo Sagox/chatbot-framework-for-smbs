@@ -44,7 +44,7 @@ public class ChatServiceController {
       return "";
   }
 
-  public ChatServiceRequest parseHangoutsRequest(JsonNode event) throws Exception {
+  private ChatServiceRequest parseHangoutsRequest(JsonNode event) throws Exception {
     ChatServiceRequest.Builder chatServiceRequestBuilder = ChatServiceRequest.newBuilder()
         .setChatClient(ChatClient.HANGOUTS);
     switch (event.at("/type").asText()) {
@@ -68,7 +68,7 @@ public class ChatServiceController {
     return chatServiceRequestBuilder.build();
   }
 
-  public ChatServiceRequest.Builder parseHangoutsUserMessage(
+  private ChatServiceRequest.Builder parseHangoutsUserMessage(
       ChatServiceRequest.Builder chatServiceRequestBuilder, JsonNode event) {
     chatServiceRequestBuilder.setRequestType(RequestType.MESSAGE);
     ChatServiceRequest.UserMessage.Builder userMessageBuilder = ChatServiceRequest.UserMessage.newBuilder();
@@ -100,7 +100,7 @@ public class ChatServiceController {
     return chatServiceRequestBuilder;
   }
 
-  public ChatServiceRequest.Builder parseHangoutsSender(ChatServiceRequest.Builder chatServiceRequestBuilder,
+  private ChatServiceRequest.Builder parseHangoutsSender(ChatServiceRequest.Builder chatServiceRequestBuilder,
       JsonNode event) {
     ChatServiceRequest.Sender.Builder senderBuilder = ChatServiceRequest.Sender.newBuilder();
     senderBuilder.setDisplayName(event.at("/user/displayName").asText())
@@ -111,7 +111,7 @@ public class ChatServiceController {
 
   }
 
-  public ChatServiceRequest parseWhatsappRequest(JsonNode event) {
+  private ChatServiceRequest parseWhatsappRequest(JsonNode event) {
       return null;
   }
 }
