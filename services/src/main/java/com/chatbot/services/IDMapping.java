@@ -58,8 +58,6 @@ public class IDMapping {
     }
   }
 
-  private void populateWhatsappBiMap() {}
-
   public void addNewMapping(String chatClientGeneratedID, String userID, ChatClient chatClient) {
     ChatClientToChatClientBiMapMapping.get(chatClient).put(chatClientGeneratedID, userID);
   }

@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package com.chatbot.services.protobuf;
+import "google/protobuf/struct.proto";
+
+message TriggerEventNotification {
+  enum Event {
+    UNKNOWN_EVENT = 0;
+    SUGGEST_CATEGORY_CHANGE = 1;
+    SUGGEST_IMAGE_UPLOAD = 2;
+    PROVIDE_SUMMARY = 3;
+  }
+  enum ChatClient {
+    UNKNOWN_CHAT_CLIENT = 0;
+    WHATSAPP = 1;
+    HANGOUTS = 2;
+  }
+  Event event = 1;
+  string userID = 2;
+  ChatClient chat_client = 3;
+  google.protobuf.Struct event_params = 4;
+} 

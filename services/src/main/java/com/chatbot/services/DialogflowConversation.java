@@ -16,71 +16,53 @@ import com.google.cloud.dialogflow.v2.EventInput;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 public class DialogflowConversation {
 
-  String projectID;
-  String langCode;
-  String sessionID;
+  private static String projectID;
+  private static String langCode;
+  private static String sessionID;
 
-  public DialogflowConversation(String projectID, String langCode, String sessionID) {
-    this.projectID = projectID;
-    this.langCode = langCode;
-    this.sessionID = sessionID;
+  public DialogflowConversation(String projectIDToSet, String langCodeToSet, String sessionIDToSet) {
+    projectID = projectIDToSet;
+    langCode = langCodeToSet;
+    sessionID = sessionIDToSet;
   }
 
-  public DialogflowConversation(String projectID, String sessionID) {
-    this.projectID = projectID;
-    this.langCode = "en";
-    this.sessionID = sessionID;
+  public DialogflowConversation(String projectIDToSet, String sessionIDToSet) {
+    projectID = projectIDToSet;
+    langCode = "en";
+    sessionID = sessionIDToSet;
   }
 
-  public DialogflowConversation(String projectID) {
-    this.projectID = projectID;
-    this.langCode = "en";
-    // if the session ID is not provided, generate a random UUID
-    this.sessionID = UUID.randomUUID().toString();
-  }
-  // function to send a message to dialogflow and get the response
+  // function to get the response for a user message from dialogflow
   public String sendMessage(String message, Struct payload) throws IOException {
     try (SessionsClient sessionsClient = SessionsClient.create()) {
-      SessionName session = SessionName.of(this.projectID, this.sessionID);
+      SessionName session = SessionName.of(projectID, sessionID);
       TextInput.Builder textInput = TextInput.newBuilder()
-          .setText(message)
-          .setLanguageCode(this.langCode);
-      // the query to be sent to dialogflow
+          .setText(message).setLanguageCode(langCode);
       QueryInput queryInput = QueryInput.newBuilder().setText(textInput).build();
-      // build the query params
       QueryParameters queryParameters = QueryParameters.newBuilder().setPayload(payload).build();
-      // Performs the detect intent request
       DetectIntentRequest detectIntentRequest = DetectIntentRequest.newBuilder()
-          .setSession(session.toString())
-          .setQueryInput(queryInput)
-          .setQueryParams(queryParameters)
+          .setSession(session.toString()).setQueryInput(queryInput).setQueryParams(queryParameters)
           .build();
       DetectIntentResponse response = sessionsClient.detectIntent(detectIntentRequest);
       QueryResult queryResult = response.getQueryResult();
       return queryResult.getFulfillmentText();
     }
   }
-  // function to trigger a dialogflow event and get the reponse
+
+  // function to get the response for an event from dialogflow
   public String triggerEvent(String event, Struct parameters, Struct payload) throws IOException {
     try (SessionsClient sessionsClient = SessionsClient.create()) {
-      SessionName session = SessionName.of(this.projectID, this.sessionID);
-      // the event to be triggered at dialogflow
+      SessionName session = SessionName.of(projectID, sessionID);
       EventInput.Builder eventInput = EventInput.newBuilder().setName(event)
-          .setParameters(parameters).setLanguageCode(this.langCode);
-      // set the query to the event to be triggered
+          .setParameters(parameters).setLanguageCode(langCode);
       QueryInput queryInput = QueryInput.newBuilder().setEvent(eventInput).build();
-      // build the query params
       QueryParameters queryParameters = QueryParameters.newBuilder().setPayload(payload)
-        .build();
-      // Performs the detect intent request
+          .build();
       DetectIntentRequest detectIntentRequest = DetectIntentRequest.newBuilder()
-          .setSession(session.toString())
-          .setQueryInput(queryInput)
-          .setQueryParams(queryParameters)
+          .setSession(session.toString()).setQueryInput(queryInput).setQueryParams(queryParameters)
           .build();
       DetectIntentResponse response = sessionsClient.detectIntent(detectIntentRequest);
       QueryResult queryResult = response.getQueryResult();
@@ -91,10 +73,11 @@ public class DialogflowConversation {
   public List<String> getCurrentContexts() throws Exception {
     List<String> contextList = new ArrayList<String>();
     try (ContextsClient contextsClient = ContextsClient.create()) {
-      // Performs the list contexts request
-      SessionName session = SessionName.of(this.projectID, this.sessionID);
+      SessionName session = SessionName.of(projectID, sessionID);
       for (Context context : contextsClient.listContexts(session).iterateAll()) {
-        contextList.add(context.getName());
+        // the name returned is the complete path of the context, of which we only need the name
+        String[] contextNameParts = context.getName().split("/");
+        contextList.add(contextNameParts[contextNameParts.length - 1]);
       }
     }
     return contextList;
